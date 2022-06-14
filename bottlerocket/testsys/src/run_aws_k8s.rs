@@ -66,7 +66,7 @@ pub(crate) struct RunAwsK8s {
     /// The name of the EKS cluster that will be used (whether it is being created or already
     /// exists).
     #[structopt(long)]
-    cluster_name: String,
+    cluster_name: Option<String>,
 
     /// The name of the TestSys resource that will represent this cluster. If you do not specify a
     /// value, one will be created matching the `cluster-name`. Unless there is a name conflict or
@@ -101,6 +101,10 @@ pub(crate) struct RunAwsK8s {
     /// Name of the pull secret for the cluster provider image.
     #[structopt(long)]
     cluster_provider_pull_secret: Option<String>,
+
+    /// Path to eksctl config file.
+    #[structopt(long)]
+    cluster_config: Option<String>,
 
     /// Keep the EKS provider agent running after cluster creation.
     #[structopt(long)]
@@ -177,20 +181,21 @@ impl RunAwsK8s {
         let cluster_resource_name = self
             .cluster_resource_name
             .as_ref()
-            .unwrap_or(&self.cluster_name);
+            .cloned()
+            .or_else(|| self.cluster_name.as_ref().cloned())
+            .unwrap_or_else(|| "cluster".to_string());
         let ec2_resource_name = self
             .ec2_resource_name
             .clone()
-            .unwrap_or(format!("{}-instances", self.cluster_name));
+            .unwrap_or(format!("{}-instances", cluster_resource_name));
         let aws_secret_map = self.aws_secret.as_ref().map(|secret_name| {
             btreemap! [ AWS_CREDENTIALS_SECRET_NAME.to_string() => secret_name.clone()]
         });
-
-        let eks_resource = self.eks_resource(cluster_resource_name, aws_secret_map.clone())?;
+        let eks_resource = self.eks_resource(&cluster_resource_name, aws_secret_map.clone())?;
         let ec2_resource = self.ec2_resource(
             &ec2_resource_name,
             aws_secret_map.clone(),
-            cluster_resource_name,
+            &cluster_resource_name,
         )?;
 
         let tests = if self.upgrade_downgrade {
@@ -219,7 +224,7 @@ impl RunAwsK8s {
                     &init_test_name,
                     aws_secret_map.clone(),
                     &ec2_resource_name,
-                    cluster_resource_name,
+                    &cluster_resource_name,
                     None,
                 )?;
                 let upgrade_test = self.migration_test(
@@ -228,7 +233,7 @@ impl RunAwsK8s {
                     tuf_repo.clone(),
                     aws_secret_map.clone(),
                     &ec2_resource_name,
-                    cluster_resource_name,
+                    &cluster_resource_name,
                     Some(vec![init_test_name.clone()]),
                     migration_agent_image,
                     &self.migration_agent_pull_secret,
@@ -237,7 +242,7 @@ impl RunAwsK8s {
                     &upgraded_test_name,
                     aws_secret_map.clone(),
                     &ec2_resource_name,
-                    cluster_resource_name,
+                    &cluster_resource_name,
                     Some(vec![init_test_name.clone(), upgrade_test_name.clone()]),
                 )?;
                 let downgrade_test = self.migration_test(
@@ -246,7 +251,7 @@ impl RunAwsK8s {
                     tuf_repo,
                     aws_secret_map.clone(),
                     &ec2_resource_name,
-                    cluster_resource_name,
+                    &cluster_resource_name,
                     Some(vec![
                         init_test_name.clone(),
                         upgrade_test_name.clone(),
@@ -259,7 +264,7 @@ impl RunAwsK8s {
                     &final_test_name,
                     aws_secret_map.clone(),
                     &ec2_resource_name,
-                    cluster_resource_name,
+                    &cluster_resource_name,
                     Some(vec![
                         init_test_name,
                         upgrade_test_name,
@@ -286,7 +291,7 @@ impl RunAwsK8s {
                 &self.name,
                 aws_secret_map.clone(),
                 &ec2_resource_name,
-                cluster_resource_name,
+                &cluster_resource_name,
                 None,
             )?]
         };
@@ -327,6 +332,12 @@ impl RunAwsK8s {
         name: &str,
         secrets: Option<BTreeMap<String, SecretName>>,
     ) -> Result<Resource> {
+        let encoded_eksctl_config = self
+            .cluster_config
+            .as_ref()
+            .map(|path| read_to_string(path).context(error::FileSnafu { path }))
+            .transpose()?
+            .map(base64::encode);
         Ok(Resource {
             metadata: ObjectMeta {
                 name: Some(name.to_string()),
@@ -349,6 +360,7 @@ impl RunAwsK8s {
                             region: Some(self.region.clone()),
                             zones: None,
                             version: self.cluster_version,
+                            encoded_eksctl_config,
                             assume_role: self.assume_role.clone(),
                         }
                         .into_map()
@@ -374,7 +386,7 @@ impl RunAwsK8s {
             // TODO - configurable
             instance_count: Some(2),
             instance_type: self.instance_type.clone(),
-            cluster_name: self.cluster_name.clone(),
+            cluster_name: format!("${{{}.clusterName}}", cluster_resource_name),
             region: self.region.clone(),
             instance_profile_arn: format!("${{{}.iamInstanceProfileArn}}", cluster_resource_name),
             subnet_id: format!("${{{}.privateSubnetId}}", cluster_resource_name),

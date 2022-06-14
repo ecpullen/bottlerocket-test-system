@@ -92,12 +92,14 @@ impl Configuration for MigrationConfig {}
 #[serde(rename_all = "camelCase")]
 pub struct EksClusterConfig {
     /// The name of the eks cluster to create or an existing cluster.
-    pub cluster_name: String,
+    /// If an eksctl config is passed, the name from the config will be used instead.
+    pub cluster_name: Option<String>,
 
     /// Whether this agent will create the cluster or not.
     pub creation_policy: Option<CreationPolicy>,
 
-    /// The AWS region to create the cluster. If no value is provided `us-west-2` will be used.
+    /// The AWS region to create the cluster. If no value is provided `us-west-2` will be used. If
+    /// an eksctl config is provided, the region provided in the config will be used.
     pub region: Option<String>,
 
     /// The availability zones. (e.g. us-west-2a,us-west-2b)
@@ -106,6 +108,11 @@ pub struct EksClusterConfig {
     /// The eks version of the the cluster (e.g. "1.14", "1.15", "1.16"). Make sure this is
     /// quoted so that it is interpreted as a JSON/YAML string (not a number).
     pub version: Option<K8sVersion>,
+
+    /// The encoded eksctl config that should be used for cluster creation. This conflicts with
+    /// `cluster_name`, `zones` and `version`. If an encoded cluster config is provided the other
+    /// values will not be used.
+    pub encoded_eksctl_config: Option<String>,
 
     /// The role that should be assumed when creating the cluster.
     pub assume_role: Option<String>,
