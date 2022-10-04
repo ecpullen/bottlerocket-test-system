@@ -1,4 +1,4 @@
-use model::Configuration;
+use configuration_build_derive::Configuration;
 use serde::{Deserialize, Serialize};
 use serde_plain::{
     derive_deserialize_from_fromstr, derive_display_from_serialize,
@@ -49,8 +49,9 @@ impl Default for SonobuoyMode {
 derive_display_from_serialize!(SonobuoyMode);
 derive_fromstr_from_deserialize!(SonobuoyMode);
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, Configuration)]
 #[serde(rename_all = "camelCase")]
+#[crd("Test")]
 pub struct SonobuoyConfig {
     pub kubeconfig_base64: String,
     pub plugin: String,
@@ -66,8 +67,6 @@ pub struct SonobuoyConfig {
     pub assume_role: Option<String>,
 }
 
-impl Configuration for SonobuoyConfig {}
-
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TufRepoConfig {
@@ -75,8 +74,9 @@ pub struct TufRepoConfig {
     pub targets_url: String,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, Configuration)]
 #[serde(rename_all = "camelCase")]
+#[crd("Test")]
 pub struct MigrationConfig {
     pub aws_region: String,
     pub instance_ids: HashSet<String>,
@@ -85,11 +85,10 @@ pub struct MigrationConfig {
     pub assume_role: Option<String>,
 }
 
-impl Configuration for MigrationConfig {}
-
 /// The configuration information for a eks instance provider.
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, Default)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, Default, Configuration)]
 #[serde(rename_all = "camelCase")]
+#[crd("Resource")]
 pub struct EksClusterConfig {
     /// The name of the eks cluster to create or an existing cluster.
     pub cluster_name: String,
@@ -110,8 +109,6 @@ pub struct EksClusterConfig {
     /// The role that should be assumed when creating the cluster.
     pub assume_role: Option<String>,
 }
-
-impl Configuration for EksClusterConfig {}
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -134,8 +131,9 @@ impl Default for CreationPolicy {
 derive_display_from_serialize!(CreationPolicy);
 derive_fromstr_from_deserialize!(CreationPolicy);
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, Default)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, Default, Configuration)]
 #[serde(rename_all = "camelCase")]
+#[crd("Resource")]
 pub struct Ec2Config {
     /// The AMI ID of the AMI to use for the worker nodes.
     pub node_ami: String,
@@ -182,8 +180,6 @@ pub struct Ec2Config {
     pub security_groups: Vec<String>,
 }
 
-impl Configuration for Ec2Config {}
-
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum ClusterType {
@@ -198,8 +194,9 @@ impl Default for ClusterType {
 }
 
 /// The configuration information for an ecs instance provider.
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, Default)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, Default, Configuration)]
 #[serde(rename_all = "camelCase")]
+#[crd("Resource")]
 pub struct EcsClusterConfig {
     /// The name of the ecs cluster to create.
     pub cluster_name: String,
@@ -217,8 +214,6 @@ pub struct EcsClusterConfig {
     /// provided, then the ECS test agent will attempt to create an IAM instance profile.
     pub iam_instance_profile_name: Option<String>,
 }
-
-impl Configuration for EcsClusterConfig {}
 
 /// Represents a parsed Kubernetes version. Examples of valid values when parsing:
 /// - `v1.21`
@@ -340,8 +335,9 @@ impl FromStr for K8sVersion {
 derive_serialize_from_display!(K8sVersion);
 derive_deserialize_from_fromstr!(K8sVersion, "k8s version such as v1.21 or 1.21.1");
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, Configuration)]
 #[serde(rename_all = "camelCase")]
+#[crd("Test")]
 pub struct EcsTestConfig {
     pub region: Option<String>,
     pub cluster_name: String,
@@ -362,10 +358,9 @@ fn default_count() -> i32 {
     1
 }
 
-impl Configuration for EcsTestConfig {}
-
-#[derive(Clone, Debug, Serialize, Deserialize, Default)]
+#[derive(Clone, Debug, Serialize, Deserialize, Default, Configuration)]
 #[serde(rename_all = "camelCase")]
+#[crd("Resource")]
 pub struct VSphereVmConfig {
     /// The name of the OVA file used for the VSphere worker nodes.
     pub ova_name: String,
@@ -400,8 +395,6 @@ pub struct VSphereVmConfig {
     /// The role that should be assumed when creating the vms.
     pub assume_role: Option<String>,
 }
-
-impl Configuration for VSphereVmConfig {}
 
 #[test]
 fn k8s_version_invalid() {

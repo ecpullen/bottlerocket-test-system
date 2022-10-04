@@ -610,8 +610,10 @@ dependencies = [
 name = "bottlerocket-types"
 version = "0.0.2"
 dependencies = [
+ "configuration-build-derive",
  "model",
  "serde",
+ "serde_json",
  "serde_plain",
 ]
 
