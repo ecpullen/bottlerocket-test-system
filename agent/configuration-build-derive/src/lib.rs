@@ -2,6 +2,23 @@
 //!
 //! Each field of the configuration is given a setter for a templated
 //! value, or a typed value.
+//!
+//! Create a configuration struct and derive `Configuration`.
+//! The `crd` attribute must be set as either `Test` or `Resource`
+//! A new builder can be created by calling `Config::builder()`
+//! To create the test crd from the builder use `build(<NAME>)`
+//! ```
+//! use configuration_build_derive::Configuration;
+//! use serde::{Deserialize, Serialize};
+//!
+//! #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, Default, Configuration)]
+//! #[crd("Test")]
+//! struct Config{
+//!     field: Option<String>
+//! }
+//!
+//! let test_crd = Config::builder().image("agent image").build("test name");
+//! ```
 
 use crate::derive::{build_struct, impl_configuration};
 use proc_macro::{self, TokenStream};

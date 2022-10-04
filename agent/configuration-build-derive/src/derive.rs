@@ -250,10 +250,10 @@ pub(crate) fn build_struct(ast: &syn::DeriveInput) -> TokenStream {
                                     image: self.image.as_ref().cloned().ok_or_else(|| "Image is required to build a test".to_string())?,
                                     pull_secret: self.image_pull_secret.as_ref().cloned(),
                                     keep_running: self.keep_running.as_ref().cloned().unwrap_or(true),
-                                    timeout: None,
                                     configuration: Some(configuration),
                                     secrets: Some(self.secrets.clone()),
                                     capabilities: Some(self.capabilities.clone()),
+                                    ..Default::default()
                                 },
                             },
                         ))
@@ -409,10 +409,10 @@ pub(crate) fn build_struct(ast: &syn::DeriveInput) -> TokenStream {
                                 image: self.image.as_ref().cloned().ok_or_else(|| "Image is required to build a test".to_string())?,
                                 pull_secret: self.image_pull_secret.as_ref().cloned(),
                                 keep_running: self.keep_running.as_ref().cloned().unwrap_or(true),
-                                timeout: None,
                                 configuration: Some(configuration),
                                 secrets: Some(self.secrets.clone()),
                                 capabilities: Some(self.capabilities.clone()),
+                                ..Default::default()
                             },
                             destruction_policy: self.destruction_policy.as_ref().cloned().unwrap_or_default()
                         },
