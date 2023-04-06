@@ -27,7 +27,7 @@ USER root
 RUN mkdir -p /usr/share/licenses/eksctl && \
     chown -R builder:builder /usr/share/licenses/eksctl
 
-ARG EKSCTL_VERSION=0.132.0
+ARG EKSCTL_VERSION=0.136.0
 ARG EKSCTL_SOURCE_URL="https://github.com/weaveworks/eksctl/archive/refs/tags/v${EKSCTL_VERSION}.tar.gz"
 
 ARG EKSCTL_BINARY_URL="https://github.com/weaveworks/eksctl/releases/download/v${EKSCTL_VERSION}/eksctl_Linux_${GOARCH}.tar.gz"
@@ -113,7 +113,7 @@ USER root
 RUN mkdir -p /usr/share/licenses/kubernetes && \
     chown -R builder:builder /usr/share/licenses/kubernetes
 
-ARG K8S_VERSION=1.23.13
+ARG K8S_VERSION=1.26.3
 ARG K8S_SOURCE_URL="https://github.com/kubernetes/kubernetes/archive/refs/tags/v${K8S_VERSION}.tar.gz"
 
 ARG KUBEADM_BINARY_URL="https://dl.k8s.io/release/v${K8S_VERSION}/bin/linux/${GOARCH}/kubeadm"
@@ -193,20 +193,21 @@ USER root
 RUN mkdir -p /usr/share/licenses/aws-iam-authenticator && \
     chown -R builder:builder /usr/share/licenses/aws-iam-authenticator
 
-ARG AWS_IAM_AUTHENTICATOR_VERSION=0.5.3
-ARG AWS_IAM_AUTHENTICATOR_SHA512_SUM=430af9fd04b9a94205a485281fb668f5bc18cdac569de0232fa98e08ebb0e08a8d233537bd3373a5f1e53cf529bc2050aebc34a4a53c8b29a831070e34213210
-ARG AWS_IAM_AUTHENTICATOR_SOURCE_URL="https://cache.bottlerocket.aws/aws-iam-authenticator-${AWS_IAM_AUTHENTICATOR_VERSION}.tar.gz/${AWS_IAM_AUTHENTICATOR_SHA512_SUM}/aws-iam-authenticator-${AWS_IAM_AUTHENTICATOR_VERSION}.tar.gz"
+ARG AWS_IAM_AUTHENTICATOR_VERSION=0.6.8
+ARG AWS_IAM_AUTHENTICATOR_SHA512_SUM=6e9f43852cdd3fb7d47ea70df5d108a0e235245b6db1a4f6406efffc329f5c940bf284c216e4bf20e83ff691b078652cee3fbae4c7c3da658ea3eef2ecab92b5
+ARG AWS_IAM_AUTHENTICATOR_SOURCE_URL="https://github.com/kubernetes-sigs/aws-iam-authenticator/archive/v${AWS_IAM_AUTHENTICATOR_VERSION}/aws-iam-authenticator-${AWS_IAM_AUTHENTICATOR_VERSION}.tar.gz"
 
 USER builder
 WORKDIR /home/builder/
-RUN mkdir aws-iam-authenticator && \
-    curl -L "${AWS_IAM_AUTHENTICATOR_SOURCE_URL}" \
-      -o "aws-iam-authenticator_${AWS_IAM_AUTHENTICATOR_VERSION}.tar.gz" && \
-    grep "aws-iam-authenticator_${AWS_IAM_AUTHENTICATOR_VERSION}.tar.gz" \
-      /hashes/aws-iam-authenticator | sha512sum --check - && \
-    tar -xf "aws-iam-authenticator_${AWS_IAM_AUTHENTICATOR_VERSION}.tar.gz" \
-      --strip-components 1 -C aws-iam-authenticator && \
-    rm "aws-iam-authenticator_${AWS_IAM_AUTHENTICATOR_VERSION}.tar.gz"
+RUN mkdir aws-iam-authenticator
+RUN curl -L "${AWS_IAM_AUTHENTICATOR_SOURCE_URL}" \
+      -o "aws-iam-authenticator_${AWS_IAM_AUTHENTICATOR_VERSION}.tar.gz"
+RUN grep "aws-iam-authenticator_${AWS_IAM_AUTHENTICATOR_VERSION}.tar.gz" \
+      /hashes/aws-iam-authenticator | sha512sum --check - 
+
+RUN tar -xf "aws-iam-authenticator_${AWS_IAM_AUTHENTICATOR_VERSION}.tar.gz" \
+      --strip-components 1 -C aws-iam-authenticator 
+RUN    rm "aws-iam-authenticator_${AWS_IAM_AUTHENTICATOR_VERSION}.tar.gz"
 
 WORKDIR /home/builder/aws-iam-authenticator/
 RUN go mod vendor
